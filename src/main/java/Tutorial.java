@@ -15,7 +15,9 @@ public class Tutorial {
     public static void main (String... args) {
         SparkConf conf = new SparkConf().setAppName("Spark_Streaming_Twitter").setMaster("local[2]");
         JavaSparkContext sc = new JavaSparkContext(conf);
-        JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(2000));
+        JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(1000));
+        jssc.checkpoint("checkpoint");
+        System.setProperty("hadoop.home.dir", args[0]);
 
         String[] filters = new String[] {"egypt"};
 
@@ -28,7 +30,17 @@ public class Tutorial {
         // Then reduce by adding the counts
         JavaPairDStream<String, Integer> counts = tuples.reduceByKeyAndWindow((a, b) -> a + b, (a, b) -> a - b, new Duration(60 * 5 * 1000), new Duration(1 * 1000));
 
-        counts.print();
+        // Find the top 10 hashtags based on their counts
+        counts.mapToPair(c -> c.swap()).transformToPair(c -> c.sortByKey(false)).foreachRDD(c -> {
+            String out = "\nTop 10 hashtags:\n";
+            for (Tuple2<Integer, String> t : c.take(10)) {
+                out = out + t.toString() + "\n";
+            }
+            System.out.println(out);
+            return null;
+        });
+
+//        hashTags.print();
 
         jssc.start();
         jssc.awaitTermination();

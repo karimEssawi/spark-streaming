@@ -4,4 +4,5 @@
 .idea
 .gradle
 build
+checkpoint
 twitter4j.properties
