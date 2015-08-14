@@ -23,6 +23,7 @@ repositories {
 dependencies {
     compile "org.apache.spark:spark-core_2.10:$sparkVersion"
     compile "org.apache.spark:spark-streaming_2.10:$sparkVersion"
+    compile "org.apache.spark:spark-mllib_2.10:$sparkVersion"
     compile "org.apache.spark:spark-streaming-twitter_2.10:$sparkVersion"
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
