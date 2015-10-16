@@ -10,7 +10,7 @@ import twitter4j.Status;
 
 import java.util.Arrays;
 
-public class Tutorial {
+public class countHashTags {
 
     public static void main (String... args) {
         SparkConf conf = new SparkConf().setAppName("Spark_Streaming_Twitter").setMaster("local[2]");
@@ -26,12 +26,12 @@ public class Tutorial {
 
         // Count the hashtags over a 5 minute window
         // Map each tag to a (tag, 1) key-value pair
-        JavaPairDStream<String, Integer> tuples = hashTags.mapToPair(h -> new Tuple2(h, 1));
+        JavaPairDStream<String, Integer> tuples = hashTags.mapToPair(h -> new Tuple2<String, Integer>(h, 1));
         // Then reduce by adding the counts
-        JavaPairDStream<String, Integer> counts = tuples.reduceByKeyAndWindow((a, b) -> a + b, (a, b) -> a - b, new Duration(60 * 5 * 1000), new Duration(1 * 1000));
+        JavaPairDStream<String, Integer> counts = tuples.reduceByKeyAndWindow((a, b) -> a + b, (a, b) -> a - b, new Duration(60 * 5 * 1000), new Duration(1000));
 
         // Find the top 10 hashtags based on their counts
-        counts.mapToPair(c -> c.swap()).transformToPair(c -> c.sortByKey(false)).foreachRDD(c -> {
+        counts.mapToPair(Tuple2::swap).transformToPair(c -> c.sortByKey(false)).foreachRDD(c -> {
             String out = "\nTop 10 hashtags:\n";
             for (Tuple2<Integer, String> t : c.take(10)) {
                 out = out + t.toString() + "\n";
@@ -40,7 +40,7 @@ public class Tutorial {
             return null;
         });
 
-//        hashTags.print();
+        hashTags.print();
 
         jssc.start();
         jssc.awaitTermination();

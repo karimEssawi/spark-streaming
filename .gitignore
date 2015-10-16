@@ -5,4 +5,5 @@
 .gradle
 build
 checkpoint
+tweets
 twitter4j.properties
