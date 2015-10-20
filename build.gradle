@@ -26,6 +26,7 @@ dependencies {
     compile "org.apache.spark:spark-mllib_2.10:$sparkVersion"
     compile "org.apache.spark:spark-streaming-twitter_2.10:$sparkVersion"
     compile "com.google.code.gson:gson:2.4"
+    compile "com.fasterxml.jackson.core:jackson-core:2.6.3"
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }

@@ -1,4 +1,5 @@
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -12,11 +13,35 @@ import java.io.File;
 /**
  * Collect at least the specified number of tweets into json text files.
  */
-public class collectTweets {
+public class CollectTweets {
+    private Integer intervalInSeconds;
+    private ObjectWriter writer;
+
+    public CollectTweets(Integer intervalInSeconds) {
+        this.intervalInSeconds = intervalInSeconds;
+        this.writer = new ObjectMapper().writer();
+    }
+
+    public Integer getIntervalInSeconds() {
+        return intervalInSeconds;
+    }
+
+    public void setIntervalInSeconds(Integer intervalInSeconds) {
+        this.intervalInSeconds = intervalInSeconds;
+    }
+
+    public ObjectWriter getWriter() {
+        return writer;
+    }
+
+    public void setWriter(ObjectWriter writer) {
+        this.writer = writer;
+    }
+
     public static void main (String... args) {
-        Integer intervalInSeconds = 1000;
+        CollectTweets collector = new CollectTweets(1000);
+
         final long[] numTweetsCollected = {0l};
-        Gson gson = new Gson();
 
         // Create tweets directory
         File outputDir = new File("tweets");
@@ -27,24 +52,25 @@ public class collectTweets {
         // Initialise Spark Streaming context
         SparkConf conf = new SparkConf().setAppName("Spark_Streaming_Twitter").setMaster("local[2]");
         JavaSparkContext sc = new JavaSparkContext(conf);
-        JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(intervalInSeconds));
+        JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(collector.getIntervalInSeconds()));
         jssc.checkpoint("checkpoint");
         System.setProperty("hadoop.home.dir", args[0]);
 
-        // Create twitter stream and map incoming tweets to gson
-        JavaDStream<String> tweetStream = TwitterUtils.createStream(jssc).map(gson::toJson);
+        // Create twitter stream and map incoming tweets to Json
+        ObjectWriter writer = collector.getWriter();
+        JavaDStream<String> tweetStream = TwitterUtils.createStream(jssc).map(writer::writeValueAsString);
         // Save to directory
         tweetStream.foreachRDD((rdd, time) -> {
             Long count = rdd.count();
             if(count > 0) {
-                JavaRDD outputRDD = rdd.repartition(10); //number of output files written for each interval
+                JavaRDD outputRDD = rdd.repartition(100); //number of output files written for each interval
                 outputRDD.saveAsTextFile(outputDir + "/tweets_" + time.milliseconds());
-                numTweetsCollected[0] += count;
-                if (numTweetsCollected[0] > 5000) {
+                numTweetsCollected[0] += count; //bad, very bad!!!
+                if (numTweetsCollected[0] > 50000) {
                     System.exit(0);
                 }
             }
-            return null; // foreachRDD accepts a Function<JavaRDD<...>, Void>
+            return null; //foreachRDD accepts a Function<JavaRDD<...>, Void>
         });
 
         jssc.start();

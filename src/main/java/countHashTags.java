@@ -17,6 +17,7 @@ public class countHashTags {
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(1000));
         jssc.checkpoint("checkpoint");
+        // Set hadoop directory
         System.setProperty("hadoop.home.dir", args[0]);
 
         String[] filters = new String[] {"egypt"};
@@ -26,7 +27,7 @@ public class countHashTags {
 
         // Count the hashtags over a 5 minute window
         // Map each tag to a (tag, 1) key-value pair
-        JavaPairDStream<String, Integer> tuples = hashTags.mapToPair(h -> new Tuple2<String, Integer>(h, 1));
+        JavaPairDStream<String, Integer> tuples = hashTags.mapToPair(h -> new Tuple2<>(h, 1));
         // Then reduce by adding the counts
         JavaPairDStream<String, Integer> counts = tuples.reduceByKeyAndWindow((a, b) -> a + b, (a, b) -> a - b, new Duration(60 * 5 * 1000), new Duration(1000));
 
