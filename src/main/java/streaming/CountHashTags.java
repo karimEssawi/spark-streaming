@@ -1,3 +1,5 @@
+package streaming;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.Duration;
@@ -10,17 +12,15 @@ import twitter4j.Status;
 
 import java.util.Arrays;
 
-public class countHashTags {
+public class CountHashTags {
 
     public static void main (String... args) {
         SparkConf conf = new SparkConf().setAppName("Spark_Streaming_Twitter").setMaster("local[2]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(1000));
         jssc.checkpoint("checkpoint");
-        // Set hadoop directory
-        System.setProperty("hadoop.home.dir", args[0]);
 
-        String[] filters = new String[] {"egypt"};
+        String[] filters = new String[] {"manchester"};
 
         JavaDStream<Status> stream = TwitterUtils.createStream(jssc, filters);
         JavaDStream<String> hashTags = stream.flatMap(t -> Arrays.asList(t.getText().split(" "))).filter(h -> h.startsWith("#"));
@@ -45,6 +45,5 @@ public class countHashTags {
 
         jssc.start();
         jssc.awaitTermination();
-
     }
 }
