@@ -56,6 +56,8 @@ public class CollectTweets {
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(collector.getIntervalInSeconds()));
         jssc.checkpoint("checkpoint");
+        // Set hadoop directory for windows
+//        System.setProperty("hadoop.home.dir", args[0]);
 
         // Create twitter stream and map incoming tweets to Json
         ObjectWriter writer = collector.getWriter();

@@ -1,14 +1,12 @@
 package ml;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.mllib.feature.HashingTF;
 import org.apache.spark.mllib.linalg.Vector;
 
-public class Utils {
-    private Integer numFeatures = 1000;
-    private HashingTF tf = new HashingTF(numFeatures);
+import java.util.Arrays;
 
-    public JavaRDD<Vector> featurize(JavaRDD s) {
-        return tf.transform(s);
-    }
+public class Utils {
+    private static HashingTF tf = new HashingTF(1000);
+    public static Function<String, Vector> featurize = (s) -> tf.transform(Arrays.asList(s.split(" ")));
 }

@@ -3,6 +3,7 @@ package streaming;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.Duration;
+import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -19,7 +20,8 @@ public class CountHashTags {
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(1000));
         jssc.checkpoint("checkpoint");
-
+//        // Set hadoop directory for windows
+        System.setProperty("hadoop.home.dir", args[0]);
         String[] filters = new String[] {"manchester"};
 
         JavaDStream<Status> stream = TwitterUtils.createStream(jssc, filters);
@@ -29,7 +31,7 @@ public class CountHashTags {
         // Map each tag to a (tag, 1) key-value pair
         JavaPairDStream<String, Integer> tuples = hashTags.mapToPair(h -> new Tuple2<>(h, 1));
         // Then reduce by adding the counts
-        JavaPairDStream<String, Integer> counts = tuples.reduceByKeyAndWindow((a, b) -> a + b, (a, b) -> a - b, new Duration(60 * 5 * 1000), new Duration(1000));
+        JavaPairDStream<String, Integer> counts = tuples.reduceByKeyAndWindow((a, b) -> a + b, (a, b) -> a - b, Durations.minutes(5), Durations.seconds(30));
 
         // Find the top 10 hashtags based on their counts
         counts.mapToPair(Tuple2::swap).transformToPair(c -> c.sortByKey(false)).foreachRDD(c -> {
