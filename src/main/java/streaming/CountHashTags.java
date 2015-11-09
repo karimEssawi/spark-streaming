@@ -20,9 +20,9 @@ public class CountHashTags {
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(1000));
         jssc.checkpoint("checkpoint");
-//        // Set hadoop directory for windows
+        // Set hadoop directory for windows
         System.setProperty("hadoop.home.dir", args[0]);
-        String[] filters = new String[] {"manchester"};
+        String[] filters = new String[] {"autotrader", "auto trader", "autotraderlife"};
 
         JavaDStream<Status> stream = TwitterUtils.createStream(jssc, filters);
         JavaDStream<String> hashTags = stream.flatMap(t -> Arrays.asList(t.getText().split(" "))).filter(h -> h.startsWith("#"));
@@ -43,7 +43,7 @@ public class CountHashTags {
             return null;
         });
 
-        hashTags.print();
+        counts.print();
 
         jssc.start();
         jssc.awaitTermination();
