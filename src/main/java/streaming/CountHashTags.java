@@ -21,7 +21,7 @@ public class CountHashTags {
         JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(1000));
         jssc.checkpoint("checkpoint");
         // Set hadoop directory for windows
-        System.setProperty("hadoop.home.dir", args[0]);
+//        System.setProperty("hadoop.home.dir", args[0]);
         String[] filters = new String[] {"autotrader", "auto trader", "autotraderlife"};
 
         JavaDStream<Status> stream = TwitterUtils.createStream(jssc, filters);
@@ -31,7 +31,10 @@ public class CountHashTags {
         // Map each tag to a (tag, 1) key-value pair
         JavaPairDStream<String, Integer> tuples = hashTags.mapToPair(h -> new Tuple2<>(h, 1));
         // Then reduce by adding the counts
-        JavaPairDStream<String, Integer> counts = tuples.reduceByKeyAndWindow((a, b) -> a + b, (a, b) -> a - b, Durations.minutes(5), Durations.seconds(30));
+        JavaPairDStream<String, Integer> counts = tuples.reduceByKeyAndWindow((a, b) -> a + b, // Add new counts to sliding window
+                                                                              (a, b) -> a - b, // subtract counts that falls out of the window
+                                                                              Durations.minutes(5), // Window size
+                                                                              Durations.seconds(30));   // Slide along every 30 seconds
 
         // Find the top 10 hashtags based on their counts
         counts.mapToPair(Tuple2::swap).transformToPair(c -> c.sortByKey(false)).foreachRDD(c -> {
@@ -43,7 +46,7 @@ public class CountHashTags {
             return null;
         });
 
-        counts.print();
+//        hashTags.print();
 
         jssc.start();
         jssc.awaitTermination();
