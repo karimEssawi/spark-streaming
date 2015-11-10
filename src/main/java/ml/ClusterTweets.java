@@ -18,7 +18,7 @@ public class ClusterTweets {
         JavaSparkContext sc = new JavaSparkContext(conf);
         SQLContext sqlContext = new SQLContext(sc);
         // Set hadoop directory for windows
-//        System.setProperty("hadoop.home.dir", args[0]);
+        System.setProperty("hadoop.home.dir", args[0]);
 
         // Create a DataFrame out of tweetInput and cache it
         String tweetInput = "tweets/tweets*/part-*";

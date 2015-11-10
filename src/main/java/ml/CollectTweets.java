@@ -57,11 +57,13 @@ public class CollectTweets {
         JavaStreamingContext jssc = new JavaStreamingContext(sc, new Duration(collector.getIntervalInSeconds()));
         jssc.checkpoint("checkpoint");
         // Set hadoop directory for windows
-//        System.setProperty("hadoop.home.dir", args[0]);
+        System.setProperty("hadoop.home.dir", args[0]);
 
         // Create twitter stream and map incoming tweets to Json
         ObjectWriter writer = collector.getWriter();
-        JavaDStream<String> tweetStream = TwitterUtils.createStream(jssc).map(writer::writeValueAsString);
+        String[] filters = new String[] {"bmw", "volkswagen", "audi"};
+        JavaDStream<String> tweetStream = TwitterUtils.createStream(jssc, filters).map(writer::writeValueAsString);
+
         // Save to directory
         tweetStream.foreachRDD((rdd, time) -> {
             Long count = rdd.count();
@@ -69,11 +71,11 @@ public class CollectTweets {
                 JavaRDD outputRDD = rdd.repartition(100); //number of output files written for each interval
                 outputRDD.saveAsTextFile(outputDir + "/tweets_" + time.milliseconds());
                 numTweetsCollected[0] += count; //bad, very bad!!!
-                if (numTweetsCollected[0] > 50000) {
+                if (numTweetsCollected[0] > 10000) {
                     System.exit(0);
                 }
             }
-            return null; //foreachRDD accepts a Function<JavaRDD<...>, Void>
+            return null;
         });
 
         jssc.start();
